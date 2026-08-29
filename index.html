@@ -347,10 +347,23 @@
     </div>
 </body>
 <script>
+    function getGermanMinutes() {
+        const formatter = new Intl.DateTimeFormat("de-DE", {
+            timeZone: "Europe/Berlin",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false
+        });
+        const parts = formatter.formatToParts(new Date());
+        const hour = Number(parts.find(function (p) { return p.type === "hour"; }).value);
+        const minute = Number(parts.find(function (p) { return p.type === "minute"; }).value);
+        return hour * 60 + minute;
+    }
+
     const greetingElement = document.getElementById("greeting");
     const widgetsElement = document.getElementById("widgets");
     const now = new Date();
-    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    const currentMinutes = getGermanMinutes();
     const dayNumber = now.getDay();
     const dayNames = ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"];
     const todayName = dayNames[dayNumber];
