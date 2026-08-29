@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Week Planner</title>
+    <style>
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+        }
+
+        :root {
+            --bg-card: #1c1c1e;
+            --bg-page: #000000;
+            --text-primary: #ffffff;
+            --text-secondary: #8e8e93;
+            --accent-green: #34c759;
+            --accent-blue: #0a84ff;
+            --accent-orange: #ff9f0a;
+            --accent-pink: #ff375f;
+            --radius: 20px;
+        }
+
+        body {
+            background-color: var(--bg-page);
+        }
+
+        #container {
+            display: grid;
+            grid-template-columns: 1fr;
+            grid-template-rows: repeat(7, 1fr);
+            grid-template-areas:
+                "top"
+                "top"
+                "widgets"
+                "widgets"
+                "widgets"
+                "widgets"
+                "bottom"
+            ;
+            box-sizing: border-box;
+            width: 100%;
+            height: 100%;
+        }
+
+        #top {
+            grid-area: top;
+            background-color: var(--bg-page);
+            width: 100%;
+            height: 100%;
+        }
+
+        #bottom {
+            grid-area: bottom;
+            background-color: var(--bg-page);
+            width: 100%;
+            height: 100%;
+        }
+
+        .widgetHeader {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            font-weight: bold;
+            font-size: 1.2em;
+            color: var(--text-primary);
+        }
+
+        #widgets {
+            grid-area: widgets;
+            display: grid;
+            grid-template-rows: 0.6fr 2fr 2fr;
+            grid-template-columns: 1fr 1fr;
+            grid-template-areas:
+                "title title"
+                "widgetOne widgetTwo"
+                "widgetThree widgetFour"
+            ;
+            background-color: black;
+            gap: 10px;
+            width: 100%;
+            height: 100%;
+        }
+
+        #widgets.no-title {
+            grid-area: widgets;
+            display: grid;
+            grid-template-rows: 1fr 1fr;
+            grid-template-columns: 1fr 1fr;
+            grid-template-areas:
+                "widgetOne widgetTwo"
+                "widgetThree widgetFour"
+            ;
+            background-color: black;
+            gap: 10px;
+            width: 100%;
+            height: 100%;
+        }
+
+        #widgets.no-title #title {
+            display: none;
+        }
+
+        #title {
+            grid-area: title;
+            width: 90%;
+            height: 90%;
+            margin: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        #greeting::after {
+            content: ".";
+            color: var(--accent-orange);
+        }
+
+        .box {
+            width: 90%;
+            height: 90%;
+            margin: auto;
+            overflow: hidden;
+            background-color: var(--bg-card);
+            border-radius: var(--radius);
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            border: 6px solid rgba(255, 255, 255, 0.15);
+        }
+
+        #widgetOne {
+            grid-area: widgetOne;
+            background-color: var(--bg-card);
+            color: var(--text-primary)
+        }
+
+        #reminderList {
+            height: 100%;
+            width: 100%;
+        }
+
+        .reminderRow {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+        }
+
+        .reminderDot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--accent-orange);
+            flex-shrink: 0;
+        }
+
+        .reminderName {
+            flex: 1;
+        }
+
+        .reminderDays {
+            color: rgba(255, 159, 10, 0.6);
+        }
+
+        #reminderCount {
+            color: var(--accent-orange);
+        }
+
+        #widgetTwo {
+            grid-area: widgetTwo;
+            background-color: var(--bg-card);
+            color: var(--text-primary)
+        }
+
+        #scheduleList {
+            display: grid;
+            grid-template-rows: repeat(8, minmax(0, 1fr));
+            height: 100%;
+            width: 100%;
+        }
+
+        .scheduleRow {
+            display: flex;
+            align-items: center;
+            padding: 6px 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .scheduleRow:last-child {
+            border-bottom: none;
+        }
+
+        .scheduleRow.active {
+            background-color: var(--accent-orange);
+            border-radius: 10px;
+        }
+
+        .periodNumber {
+            width: 28px;
+            flex-shrink: 0;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .periodSubject {
+            flex: 1;
+        }
+
+        #widgetThree {
+            grid-area: widgetThree;
+            background-color: var(--bg-card);
+            color: var(--text-primary)
+        }
+
+        .plannerHeader {
+            display: flex;
+            flex-direction: column;
+            padding: 12px;
+        }
+
+        .headerTitle {
+            font-weight: bold;
+            font-size: 1.2em;
+            color: var(--text-primary);
+        }
+
+        #plannerDay {
+            font-size: 0.75em;
+            color: var(--accent-orange);
+            margin-top: 2px;
+        }
+
+        #widgetFour {
+            grid-area: widgetFour;
+            background-color: var(--bg-card);
+            color: var(--text-primary)
+        }
+
+        #weatherWidget {
+            padding: 12px;
+            height: 100%;
+            box-sizing: border-box;
+        }
+
+        .weatherHeader {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .weatherCity {
+            font-weight: bold;
+        }
+
+        .weatherCurrentTemp {
+            font-size: 2em;
+            font-weight: bold;
+        }
+
+        .weatherCurrentRight {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 4px;
+        }
+
+        .weatherCurrentRain {
+            color: rgba(255, 159, 10, 0.6);
+            font-size: 0.9em;
+        }
+
+        .weatherForecast {
+            margin-top: 10px;
+        }
+
+        .weatherRow {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 0;
+        }
+
+        .weatherDay {
+            width: 28px;
+        }
+
+        .weatherIcon {
+            width: 24px;
+            text-align: center;
+        }
+
+        .weatherRain {
+            width: 35px;
+            color: rgba(255, 159, 10, 0.6);
+            font-size: 0.85em;
+        }
+
+        .weatherTemp {
+            margin-left: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="container">
+        <div id="top"></div>
+        <div id="widgets">
+            <div id="title" class="box">
+                <h1 id="greeting"></h1>
+            </div>
+            <div id="widgetOne" class="box">
+                <div class="widgetHeader">
+                    <span>Ereignisse</span>
+                    <span id="reminderCount"></span>
+                </div>
+                <div id="reminderList"></div>
+            </div>
+            <div id="widgetTwo" class="box">
+                <div id="scheduleList"></div>
+            </div>
+            <div id="widgetThree" class="box">
+                <div class="plannerHeader">
+                    <span class="headerTitle">Week-Planner</span>
+                    <span id="plannerDay"></span>
+                </div>
+                <div id="plannerList"></div>
+            </div>
+            <div id="widgetFour" class="box">
+                <div id="weatherWidget"></div>
+            </div>
+        </div>
+        <div id="bottom"></div>
+    </div>
+</body>
+<script>
+    const greetingElement = document.getElementById("greeting");
+    const widgetsElement = document.getElementById("widgets");
+    const now = new Date();
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    const dayNumber = now.getDay();
+    const dayNames = ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"];
+    const todayName = dayNames[dayNumber];
+
+    function startOfDay(date) {
+        const result = new Date(date);
+        result.setHours(0, 0, 0, 0);
+        return result;
+    }
+
+    if (currentMinutes >= 360 && currentMinutes <= 390) {
+        greetingElement.textContent = "Guten Morgen Henry";
+        widgetsElement.classList.remove("no-title");
+    } else if (currentMinutes >= 1230 && currentMinutes <= 1380) {
+        greetingElement.textContent = "Good Night Henry";
+        widgetsElement.classList.remove("no-title");
+    } else {
+        greetingElement.textContent = "";
+        widgetsElement.classList.add("no-title");
+    }
+
+    const periodTimes = [
+        { period: 1, start: "7:45", end: "8:30" },
+        { period: 2, start: "8:35", end: "9:20" },
+        { period: 3, start: "9:40", end: "10:25" },
+        { period: 4, start: "10:25", end: "11:10" },
+        { period: 5, start: "11:30", end: "12:15" },
+        { period: 6, start: "12:15", end: "13:00" },
+        { period: 7, start: "13:40", end: "14:25" },
+        { period: 8, start: "14:25", end: "15:10" },
+    ];
+
+    const weekSchedule = {
+        Montag: [null, null, "Religion", "Religion", "Biologie", "Biologie", "Spanisch", "Spanisch"],
+        Dienstag: ["Physik", "Physik", "Politik", "Politik", "Chemie", "Chemie", null, null],
+        Mittwoch: ["Spanisch", "Spanisch", "Deutsch", "Englisch", "Geschichte", "Geschichte", null, null],
+        Donnerstag: ["Deutsch", "Deutsch", "Mathematik", null, "Englisch", "Englisch", "Erdkunde", "Erdkunde"],
+        Freitag: ["Sport", "Sport", "Mathematik", "Mathematik", "Kunst", "Kunst", null, null],
+        Samstag: [null, null, null, null, null, null, null, null],
+        Sonntag: [null, null, null, null, null, null, null, null]
+    };
+
+    const reminders = [
+        { name: "Rasenmähen", type: "interval", startDate: "2026-08-20", intervalDays: 14 },
+        { name: "Geburtstag Mama", type: "yearly", month: 10, day: 15 },
+        { name: "Geburtstag Papa", type: "yearly", month: 11, day: 26 },
+        { name: "Geburtstag Milan", type: "yearly", month: 12, day: 17 },
+        { name: "AGFE", type: "date", date: "2026-09-12" }
+    ];
+
+    const weekPlanner = {
+        Montag: [
+            { name: "Laufen" },
+            { name: "Darten", time: "18:00" }
+        ],
+        Dienstag: [
+            { name: "Tischtennis Training", time: "18:00" }
+        ],
+        Mittwoch: [
+            { name: "Fahrschule", time: "17:15" },
+        ],
+        Donnerstag: [
+            { name: "Laufen" },
+        ],
+        Freitag: [
+            { name: "Tischtennis Training", time: "17:00" },
+        ],
+        Samstag: [],
+        Sonntag: []
+    };
+
+    function timeToMinutes(timeString) {
+        const parts = timeString.split(":");
+        const hours = Number(parts[0]);
+        const minutes = Number(parts[1]);
+        return hours * 60 + minutes;
+    }
+
+    function daysUntilInterval(startDateString, intervalDays, now) {
+        const startDate = startOfDay(new Date(startDateString));
+        const today = startOfDay(now);
+        const msPerDay = 1000 * 60 * 60 * 24;
+        const daysSinceStart = Math.round((today - startDate) / msPerDay);
+
+        const daysIntoCycle = daysSinceStart % intervalDays;
+
+        if (daysIntoCycle === 0) {
+            return 0;
+        }
+
+        return intervalDays - daysIntoCycle;
+    }
+
+    function daysUntilDate(dateString, now) {
+        const targetDate = startOfDay(new Date(dateString));
+        const today = startOfDay(now);
+        const msPerDay = 1000 * 60 * 60 * 24;
+        const daysUntil = Math.round((targetDate - today) / msPerDay);
+        return daysUntil;
+    }
+
+    function daysUntilYearly(month, day, now) {
+        const today = startOfDay(now);
+        const currentYear = today.getFullYear();
+        let targetDate = new Date(currentYear, month - 1, day);
+
+        if (targetDate < today) {
+            targetDate = new Date(currentYear + 1, month - 1, day);
+        }
+
+        const msPerDay = 1000 * 60 * 60 * 24;
+        return Math.round((targetDate - today) / msPerDay);
+    }
+
+    let scheduleHTML = "";
+
+    periodTimes.forEach(function (period, index) {
+        const subject = weekSchedule[todayName][index];
+        const startMinutes = timeToMinutes(period.start);
+        const endMinutes = timeToMinutes(period.end);
+        const isActive = currentMinutes >= startMinutes && currentMinutes < endMinutes;
+        const displaySubject = subject === null ? "---" : subject;
+        const activeClass = isActive ? "active" : "";
+
+        scheduleHTML += `<div class="scheduleRow ${activeClass}">
+            <span class="periodNumber">${period.period}</span>
+            <span class="periodSubject">${displaySubject}</span>
+        </div>`;;
+    });
+
+    document.getElementById("scheduleList").innerHTML = scheduleHTML;
+
+    let reminderHTML = "";
+    let visibleCount = 0;
+
+    reminders.forEach(function (reminder) {
+        let daysLeft;
+
+        switch (reminder.type) {
+            case "interval":
+                daysLeft = daysUntilInterval(reminder.startDate, reminder.intervalDays, now);
+                break;
+            case "yearly":
+                daysLeft = daysUntilYearly(reminder.month, reminder.day, now);
+                break;
+            case "date":
+                daysLeft = daysUntilDate(reminder.date, now);
+                break;
+        }
+
+        if (daysLeft <= 7) {
+            visibleCount = visibleCount + 1;
+            reminderHTML += `<div class="reminderRow">
+            <span class="reminderDot"></span>
+            <span class="reminderName">${reminder.name}</span>
+            <span class="reminderDays">${daysLeft}d</span>
+        </div>`;
+        }
+    });
+
+    let plannerHTML = "";
+
+    weekPlanner[todayName].forEach(function (activity) {
+        const timeText = activity.time ? activity.time : "";
+
+        plannerHTML += `<div class="reminderRow">
+        <span class="reminderDot"></span>
+        <span class="reminderName">${activity.name}</span>
+        <span class="reminderDays">${timeText}</span>
+    </div>`;
+    });
+
+    document.getElementById("plannerList").innerHTML = plannerHTML;
+
+    document.getElementById("reminderList").innerHTML = reminderHTML;
+    document.getElementById("reminderCount").textContent = visibleCount;
+    document.getElementById("plannerDay").textContent = todayName;
+
+    const weekdayShort = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
+
+    const weatherIcons = {
+        0: "☀️", 1: "🌤️", 2: "⛅", 3: "☁️",
+        45: "🌫️", 48: "🌫️",
+        51: "🌦️", 53: "🌦️", 55: "🌧️",
+        61: "🌧️", 63: "🌧️", 65: "🌧️",
+        71: "🌨️", 73: "🌨️", 75: "🌨️",
+        80: "🌦️", 81: "🌧️", 82: "⛈️",
+        95: "⛈️"
+    };
+
+    function getWeatherIcon(code) {
+        return weatherIcons[code] || "☁️";
+    }
+
+    async function loadWeather() {
+        const url = "https://api.open-meteo.com/v1/forecast?latitude=51.99&longitude=9.83&current=temperature_2m,precipitation_probability&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weathercode&timezone=auto";
+        const response = await fetch(url);
+        const data = await response.json();
+
+        const currentTemp = Math.round(data.current.temperature_2m);
+        const currentRain = data.current.precipitation_probability;
+        const currentIcon = getWeatherIcon(data.daily.weathercode[0]);
+
+        let forecastHTML = "";
+
+        for (let i = 1; i <= 4; i++) {
+            const dayIndex = new Date(data.daily.time[i]).getDay();
+            const dayLabel = weekdayShort[dayIndex];
+            const icon = getWeatherIcon(data.daily.weathercode[i]);
+            const rain = data.daily.precipitation_probability_max[i];
+            const maxTemp = Math.round(data.daily.temperature_2m_max[i]);
+
+            forecastHTML += `<div class="weatherRow">
+            <span class="weatherDay">${dayLabel}</span>
+            <span class="weatherIcon">${icon}</span>
+            <span class="weatherRain">${rain}%</span>
+            <span class="weatherTemp">${maxTemp}°</span>
+        </div>`;
+        }
+
+        document.getElementById("weatherWidget").innerHTML = `
+        <div class="weatherHeader">
+            <div>
+                <div class="weatherCity">Alfeld</div>
+                <div class="weatherCurrentTemp">${currentTemp}°</div>
+            </div>
+            <div class="weatherCurrentRight">
+                <span class="weatherIconBig">${currentIcon}</span>
+                <span class="weatherCurrentRain">${currentRain}%</span>
+            </div>
+        </div>
+        <div class="weatherForecast">${forecastHTML}</div>
+    `;
+    }
+
+    loadWeather();
+</script>
+
+</html>
