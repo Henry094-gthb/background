@@ -582,7 +582,8 @@
         visibleCount < 2 ? "1em" :
             visibleCount <= 2 ? "0.9em" :
                 visibleCount <= 4 ? "0.8em" :
-                    "0.75em";
+                    visibleCount <= 5 ? "0.7em" :
+                                            "0.6em";
 
     let plannerHTML = "";
 
