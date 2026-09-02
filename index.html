@@ -412,8 +412,14 @@
         { name: "Geburtstag Mama", type: "yearly", month: 10, day: 15 },
         { name: "Geburtstag Papa", type: "yearly", month: 11, day: 26 },
         { name: "Geburtstag Milan", type: "yearly", month: 12, day: 17 },
-        { name: "AGFE", type: "date", date: "2026-09-12" },
-        { name: "Chemie Schutzbrille", type: "date", date: "2026-09-01" },
+        { name: "AGFE", type: "date", date: "2026-09-13" },
+        { name: "Mitgliederversammlung", type: "date", date: "2026-09-03", start: "19:00", end: "21:00" },
+        { name: "Jugendfeedern", type: "date", date: "2026-09-12" },
+        { name: "Gemeinschaftsfischen", type: "date", date: "2026-09-19" },
+        { name: "Kameradschaftsangeln", type: "date", date: "2026-09-26" },
+        { name: "", type: "date", date: "2026-09-" },
+        { name: "Abangeln", type: "date", date: "2026-12-29" },
+        { name: "PayPal Herr Laudage", type: "date", date: "2026-09-03" }
     ];
 
     const weekPlanner = {
@@ -422,16 +428,16 @@
             { name: "Darten", time: "18:00" }
         ],
         Dienstag: [
-            { name: "Tischtennis Training", time: "18:00" }
+            { name: "Tischtennis Training", time: "19:00", end: "21:00" }
         ],
         Mittwoch: [
-            { name: "Fahrschule", time: "17:15" },
+            { name: "Fahrschule", time: "17:15", end: "18:45" },
         ],
         Donnerstag: [
             { name: "Laufen" },
         ],
         Freitag: [
-            { name: "Tischtennis Training", time: "17:00" },
+            { name: "Tischtennis Training", time: "17:00", end: "18:30" },
         ],
         Samstag: [],
         Sonntag: []
@@ -499,7 +505,7 @@
             <span class="periodSubject">${displaySubject}</span>
         </div>`
 
-        return;
+            return;
         }
 
         scheduleHTML += `<div class="scheduleRow ${activeClass}">
@@ -528,14 +534,47 @@
                 break;
         }
 
-        if (daysLeft <= 7 && daysLeft >= 0) {
-            visibleCount = visibleCount + 1;
+        if (daysLeft <= 7 && daysLeft > 0) {
+            visibleCount++;
 
             reminderHTML += `<div class="reminderRow">
             <span class="reminderDot"></span>
             <span class="reminderName">${reminder.name}</span>
             <span class="reminderDays">${daysLeft}d</span>
         </div>`;
+        }
+
+        else if (daysLeft === 0) {
+
+            if (reminder.start) {
+                const startMinutes = timeToMinutes(reminder.start);
+                const endMinutes = reminder.end ? timeToMinutes(reminder.end) : null;
+
+                let displayTime;
+
+                if (
+                    currentMinutes >= startMinutes &&
+                    (endMinutes === null || currentMinutes < endMinutes)
+                ) {
+                    displayTime = "Jetzt";
+                } else {
+                    displayTime = reminder.end
+                        ? `${reminder.start} - ${reminder.end}`
+                        : reminder.start;
+                }
+
+                reminderHTML += `<div class="reminderRow">
+                <span class="reminderDot"></span>
+                <span class="reminderName">${reminder.name}</span>
+                <span class="reminderDays">${displayTime}</span>
+            </div>`;
+            } else {
+                reminderHTML += `<div class="reminderRow">
+                <span class="reminderDot"></span>
+                <span class="reminderName">${reminder.name}</span>
+                <span class="reminderDays">!!!</span>
+            </div>`;
+            }
         }
     });
 
@@ -550,11 +589,30 @@
     weekPlanner[todayName].forEach(function (activity) {
         const timeText = activity.time ? activity.time : "";
 
-        plannerHTML += `<div class="reminderRow">
-        <span class="reminderDot"></span>
-        <span class="reminderName">${activity.name}</span>
-        <span class="reminderDays">${timeText}</span>
-    </div>`;
+        if (activity.end) {
+            startMinutes = timeToMinutes(activity.time);
+            endMinutes = timeToMinutes(activity.end);
+
+            if (currentMinutes >= startMinutes && currentMinutes < endMinutes) {
+                plannerHTML += `<div class="reminderRow">
+                <span class="reminderDot"></span>
+                <span class="reminderName">${activity.name}</span>
+                <span class="reminderDays">Jetzt</span>
+            </div>`;
+            } else {
+                plannerHTML += `<div class="reminderRow">
+                <span class="reminderDot"></span>
+                <span class="reminderName">${activity.name}</span>
+                <span class="reminderDays">${timeText}</span>
+            </div>`;
+            }
+        } else {
+            plannerHTML += `<div class="reminderRow">
+            <span class="reminderDot"></span>
+            <span class="reminderName">${activity.name}</span>
+            <span class="reminderDays">${timeText}</span>
+        </div>`;
+        }
     });
 
     document.getElementById("plannerList").innerHTML = plannerHTML;
