@@ -367,6 +367,7 @@
     const dayNumber = now.getDay();
     const dayNames = ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"];
     const todayName = dayNames[dayNumber];
+    const tomorrowName = dayNames[(dayNumber + 1) % 7];
 
     function startOfDay(date) {
         const result = new Date(date);
@@ -487,12 +488,24 @@
         const endMinutes = timeToMinutes(period.end);
         const isActive = currentMinutes >= startMinutes && currentMinutes < endMinutes;
         const displaySubject = subject === null ? "---" : subject;
-        const activeClass = isActive ? "active" : "";
+        const activeClass = (isActive && subject !== null) ? "active" : "";
+
+        if (currentMinutes >= 1230) {
+            const subject = weekSchedule[tomorrowName][index];
+            const displaySubject = subject === null ? "---" : subject;
+
+            scheduleHTML += `<div class="scheduleRow ${activeClass}">
+            <span class="periodNumber">${period.period}</span>
+            <span class="periodSubject">${displaySubject}</span>
+        </div>`
+
+        return;
+        }
 
         scheduleHTML += `<div class="scheduleRow ${activeClass}">
             <span class="periodNumber">${period.period}</span>
             <span class="periodSubject">${displaySubject}</span>
-        </div>`;;
+        </div>`;
     });
 
     document.getElementById("scheduleList").innerHTML = scheduleHTML;
@@ -515,8 +528,9 @@
                 break;
         }
 
-        if (daysLeft <= 7) {
+        if (daysLeft <= 7 && daysLeft >= 0) {
             visibleCount = visibleCount + 1;
+
             reminderHTML += `<div class="reminderRow">
             <span class="reminderDot"></span>
             <span class="reminderName">${reminder.name}</span>
@@ -524,6 +538,12 @@
         </div>`;
         }
     });
+
+    document.getElementById("reminderList").style.fontSize =
+        visibleCount < 2 ? "1em" :
+            visibleCount <= 2 ? "0.9em" :
+                visibleCount <= 4 ? "0.8em" :
+                    "0.75em";
 
     let plannerHTML = "";
 
@@ -549,8 +569,8 @@
         0: "☀️", 1: "🌤️", 2: "⛅", 3: "☁️",
         45: "🌫️", 48: "🌫️",
         51: "🌦️", 53: "🌦️", 55: "🌧️",
-        61: "🌧️", 63: "🌧️", 65: "🌧️",
-        71: "🌨️", 73: "🌨️", 75: "🌨️",
+        61: "🌦️", 63: "🌧️", 65: "🌧️",
+        71: "🌨️", 73: "🌨️", 75: "❄️",
         80: "🌦️", 81: "🌧️", 82: "⛈️",
         95: "⛈️"
     };
@@ -576,13 +596,14 @@
             const icon = getWeatherIcon(data.daily.weathercode[i]);
             const rain = data.daily.precipitation_probability_max[i];
             const maxTemp = Math.round(data.daily.temperature_2m_max[i]);
+            const minTemp = Math.round(data.daily.temperature_2m_min[i]);
 
             forecastHTML += `<div class="weatherRow">
-            <span class="weatherDay">${dayLabel}</span>
-            <span class="weatherIcon">${icon}</span>
-            <span class="weatherRain">${rain}%</span>
-            <span class="weatherTemp">${maxTemp}°</span>
-        </div>`;
+        <span class="weatherDay">${dayLabel}</span>
+        <span class="weatherIcon">${icon}</span>
+        <span class="weatherRain">${rain}%</span>
+        <span class="weatherTemp">${maxTemp}°/${minTemp}°</span>
+    </div>`;
         }
 
         document.getElementById("weatherWidget").innerHTML = `
