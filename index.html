@@ -578,8 +578,7 @@ visibleCount++;
     });
 
     document.getElementById("reminderList").style.fontSize =
-        visibleCount < 2 ? "1em" :
-            visibleCount <= 2 ? "0.9em" :
+            visibleCount < 0 ? "0.9em" :
                 visibleCount <= 4 ? "0.8em" :
                     visibleCount <= 5 ? "0.7em" :
                                             "0.6em";
