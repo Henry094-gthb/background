@@ -553,16 +553,15 @@
     }
 
     async function loadSheetData(url) {
-        const proxyUrl = "https://api.codetabs.com/v1/proxy?quest=" + encodeURIComponent(url);
-        const response = await fetch(proxyUrl);
+        const response = await fetch(url);
         const csvText = await response.text();
         return parseCSV(csvText);
     }
 
     async function init() {
         try {
-            const eventsUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQdvWjnA9aBBJTS-kf4mavmCH4CGxQdPyU3HbB09bePj3GnWC-hlpaG0gVSujtUkZqUcgSf0l6O2ND3/pub?output=csv";
-            const examsUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQURcgDDelMQ4QVdwPj2G_uXuJVghL9mfeLJEU17-nO6jUVE8poGPjCn2Z4mCX8LPnIJRz3MwykSEns/pub?output=csv";
+            const eventsUrl = "https://docs.google.com/spreadsheets/d/1lCHSpTJo9XMKw5QpRFuvWQ-LaS84xsZsqEJiRACIBF4/gviz/tq?tqx=out:csv&gid=0";
+            const examsUrl = "https://docs.google.com/spreadsheets/d/1eZ9zVvmLf8ZibVjUJ-AUpPZLwVabTW8GmkgLOpZF3AE/gviz/tq?tqx=out:csv&gid=0";
 
 
             const sheetEvents = await loadSheetData(eventsUrl);
