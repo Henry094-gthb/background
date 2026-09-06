@@ -143,13 +143,17 @@
         #reminderList {
             height: 100%;
             width: 100%;
+            display: flex;
+            flex-direction: column;
         }
 
         .reminderRow {
             display: flex;
             align-items: center;
             gap: 10px;
-            padding: 8px 12px;
+            padding: 4px 12px;
+            flex: 1;
+            min-height: 0;
         }
 
         .reminderDot {
@@ -534,6 +538,10 @@
         return formatExamDate(examDate);
     }
 
+    function stripQuotes(value) {
+        return value.replace(/^"|"$/g, "");
+    }
+
     function parseCSV(csvText) {
         const lines = csvText.trim().split("\n");
         const rows = [];
@@ -541,8 +549,9 @@
         for (let i = 1; i < lines.length; i++) {
             const values = lines[i].split(",");
             rows.push({
-                name: values[0].trim(),
-                date: values[1].trim()
+                name: stripQuotes(values[0].trim()),
+                date: stripQuotes(values[1].trim()),
+                type: values[2] ? stripQuotes(values[2].trim()) : ""
             });
         }
 
@@ -565,7 +574,17 @@
             const sheetExams = await loadSheetData(examsUrl);
 
             sheetEvents.forEach(function (event) {
-                reminders.push({ name: event.name, type: "date", date: event.date });
+                if (event.type === "jährlich") {
+                    const dateParts = event.date.split("-");
+                    reminders.push({
+                        name: event.name,
+                        type: "yearly",
+                        month: Number(dateParts[1]),
+                        day: Number(dateParts[2])
+                    });
+                } else {
+                    reminders.push({ name: event.name, type: "date", date: event.date });
+                }
             });
 
             sheetExams.forEach(function (exam) {
@@ -673,9 +692,9 @@
             });
 
             document.getElementById("reminderList").style.fontSize =
-                visibleCount <= 2 ? "0.9em" :
-                    visibleCount <= 4 ? "0.8em" :
-                        visibleCount <= 5 ? "0.7em" :
+                visibleCount <= 2 ? "1em" :
+                    visibleCount === 3 ? "0.85em" :
+                        visibleCount === 4 ? "0.7em" :
                             "0.6em";
 
             let plannerHTML = "";
