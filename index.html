@@ -137,14 +137,17 @@
         #widgetOne {
             grid-area: widgetOne;
             background-color: var(--bg-card);
-            color: var(--text-primary)
+            color: var(--text-primary);
+            display: flex;
+            flex-direction: column;
         }
 
         #reminderList {
-            height: 100%;
             width: 100%;
             display: flex;
             flex-direction: column;
+            flex: 1;
+            min-height: 0;
         }
 
         .reminderRow {
@@ -235,7 +238,16 @@
         #widgetThree {
             grid-area: widgetThree;
             background-color: var(--bg-card);
-            color: var(--text-primary)
+            color: var(--text-primary);
+            display: flex;
+            flex-direction: column;
+        }
+
+        #plannerList {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
         }
 
         .plannerHeader {
