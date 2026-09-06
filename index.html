@@ -537,192 +537,232 @@
         return formatExamDate(examDate);
     }
 
-    let scheduleHTML = "";
+    function parseCSV(csvText) {
+        const lines = csvText.trim().split("\n");
+        const rows = [];
 
-    periodTimes.forEach(function (period, index) {
-        const subject = weekSchedule[todayName][index];
-        const previousSubject = index > 0 ? weekSchedule[todayName][index - 1] : null;
-        const startMinutes = timeToMinutes(period.start);
-        const endMinutes = timeToMinutes(period.end);
-        const isActive = currentMinutes >= startMinutes && currentMinutes < endMinutes;
-        const displaySubject = subject === null ? "---" : subject;
-        const activeClass = (isActive && subject !== null) ? "active" : "";
-        const examText = (subject !== previousSubject) ? getExamText(subject, now) : "";
-        const examHTML = examText ? `<span class="examDate">${examText}</span>` : "";
+        for (let i = 1; i < lines.length; i++) {
+            const values = lines[i].split(",");
+            rows.push({
+                name: values[0].trim(),
+                date: values[1].trim()
+            });
+        }
 
-        if (currentMinutes >= 910) {
-            const subject = weekSchedule[tomorrowName][index];
-            const previousSubject = index > 0 ? weekSchedule[tomorrowName][index - 1] : null;
-            const displaySubject = subject === null ? "---" : subject;
-            const tomorrowExamText = (subject !== previousSubject) ? getExamText(subject, now) : "";
-            const tomorrowExamHTML = tomorrowExamText ? `<span class="examDate">${tomorrowExamText}</span>` : "";
+        return rows;
+    }
 
-            scheduleHTML += `<div class="scheduleRow ${activeClass}">
+    async function loadSheetData(url) {
+        const proxyUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent(url);
+        const response = await fetch(proxyUrl);
+        const csvText = await response.text();
+        return parseCSV(csvText);
+    }
+
+    async function init() {
+        try {
+            const eventsUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQdvWjnA9aBBJTS-kf4mavmCH4CGxQdPyU3HbB09bePj3GnWC-hlpaG0gVSujtUkZqUcgSf0l6O2ND3/pub?output=csv";
+            const examsUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQURcgDDelMQ4QVdwPj2G_uXuJVghL9mfeLJEU17-nO6jUVE8poGPjCn2Z4mCX8LPnIJRz3MwykSEns/pub?output=csv";
+
+
+            const sheetEvents = await loadSheetData(eventsUrl);
+            const sheetExams = await loadSheetData(examsUrl);
+
+            sheetEvents.forEach(function (event) {
+                reminders.push({ name: event.name, type: "date", date: event.date });
+            });
+
+            sheetExams.forEach(function (exam) {
+                exams[exam.name] = exam.date;
+            });
+
+            let scheduleHTML = "";
+
+            periodTimes.forEach(function (period, index) {
+                const subject = weekSchedule[todayName][index];
+                const previousSubject = index > 0 ? weekSchedule[todayName][index - 1] : null;
+                const startMinutes = timeToMinutes(period.start);
+                const endMinutes = timeToMinutes(period.end);
+                const isActive = currentMinutes >= startMinutes && currentMinutes < endMinutes;
+                const displaySubject = subject === null ? "---" : subject;
+                const activeClass = (isActive && subject !== null) ? "active" : "";
+                const examText = (subject !== previousSubject) ? getExamText(subject, now) : "";
+                const examHTML = examText ? `<span class="examDate">${examText}</span>` : "";
+
+                if (currentMinutes >= 910) {
+                    const subject = weekSchedule[tomorrowName][index];
+                    const previousSubject = index > 0 ? weekSchedule[tomorrowName][index - 1] : null;
+                    const displaySubject = subject === null ? "---" : subject;
+                    const tomorrowExamText = (subject !== previousSubject) ? getExamText(subject, now) : "";
+                    const tomorrowExamHTML = tomorrowExamText ? `<span class="examDate">${tomorrowExamText}</span>` : "";
+
+                    scheduleHTML += `<div class="scheduleRow ${activeClass}">
         <span class="periodNumber">${period.period}</span>
         <span class="periodSubject">${displaySubject}</span>
         ${tomorrowExamHTML}
     </div>`;
 
-            return;
-        }
+                    return;
+                }
 
-        scheduleHTML += `<div class="scheduleRow ${activeClass}">
+                scheduleHTML += `<div class="scheduleRow ${activeClass}">
     <span class="periodNumber">${period.period}</span>
     <span class="periodSubject">${displaySubject}</span>
     ${examHTML}
 </div>`;
-    });
+            });
 
-    document.getElementById("scheduleList").innerHTML = scheduleHTML;
+            document.getElementById("scheduleList").innerHTML = scheduleHTML;
 
-    let reminderHTML = "";
-    let visibleCount = 0;
+            let reminderHTML = "";
+            let visibleCount = 0;
 
-    reminders.forEach(function (reminder) {
-        let daysLeft;
+            reminders.forEach(function (reminder) {
+                let daysLeft;
 
-        switch (reminder.type) {
-            case "interval":
-                daysLeft = daysUntilInterval(reminder.startDate, reminder.intervalDays, now);
-                break;
-            case "yearly":
-                daysLeft = daysUntilYearly(reminder.month, reminder.day, now);
-                break;
-            case "date":
-                daysLeft = daysUntilDate(reminder.date, now);
-                break;
-        }
+                switch (reminder.type) {
+                    case "interval":
+                        daysLeft = daysUntilInterval(reminder.startDate, reminder.intervalDays, now);
+                        break;
+                    case "yearly":
+                        daysLeft = daysUntilYearly(reminder.month, reminder.day, now);
+                        break;
+                    case "date":
+                        daysLeft = daysUntilDate(reminder.date, now);
+                        break;
+                }
 
-        if (daysLeft <= 7 && daysLeft > 0) {
-            visibleCount++;
+                if (daysLeft <= 7 && daysLeft > 0) {
+                    visibleCount++;
 
-            reminderHTML += `<div class="reminderRow">
+                    reminderHTML += `<div class="reminderRow">
             <span class="reminderDot"></span>
             <span class="reminderName">${reminder.name}</span>
             <span class="reminderDays">${daysLeft}d</span>
         </div>`;
-        }
-
-        else if (daysLeft === 0) {
-            visibleCount++;
-            if (reminder.start) {
-                const startMinutes = timeToMinutes(reminder.start);
-                const endMinutes = reminder.end ? timeToMinutes(reminder.end) : null;
-
-                let displayTime;
-
-                if (
-                    currentMinutes >= startMinutes &&
-                    (endMinutes === null || currentMinutes < endMinutes)
-                ) {
-                    displayTime = "Jetzt";
-                } else {
-                    displayTime = reminder.end
-                        ? `${reminder.start} - ${reminder.end}`
-                        : reminder.start;
                 }
 
-                reminderHTML += `<div class="reminderRow">
+                else if (daysLeft === 0) {
+                    visibleCount++;
+                    if (reminder.start) {
+                        const startMinutes = timeToMinutes(reminder.start);
+                        const endMinutes = reminder.end ? timeToMinutes(reminder.end) : null;
+
+                        let displayTime;
+
+                        if (
+                            currentMinutes >= startMinutes &&
+                            (endMinutes === null || currentMinutes < endMinutes)
+                        ) {
+                            displayTime = "Jetzt";
+                        } else {
+                            displayTime = reminder.end
+                                ? `${reminder.start} - ${reminder.end}`
+                                : reminder.start;
+                        }
+
+                        reminderHTML += `<div class="reminderRow">
                 <span class="reminderDot"></span>
                 <span class="reminderName">${reminder.name}</span>
                 <span class="reminderDays">${displayTime}</span>
             </div>`;
-            } else {
-                reminderHTML += `<div class="reminderRow">
+                    } else {
+                        reminderHTML += `<div class="reminderRow">
                 <span class="reminderDot"></span>
                 <span class="reminderName">${reminder.name}</span>
                 <span class="reminderDays">!!!</span>
             </div>`;
-            }
-        }
-    });
+                    }
+                }
+            });
 
-    document.getElementById("reminderList").style.fontSize =
-        visibleCount > 0 ? "0.8em" :
-            visibleCount <= 5 ? "0.7em" :
-                "0.6em";
+            document.getElementById("reminderList").style.fontSize =
+                visibleCount <= 2 ? "0.9em" :
+                    visibleCount <= 4 ? "0.8em" :
+                        visibleCount <= 5 ? "0.7em" :
+                            "0.6em";
 
-    let plannerHTML = "";
+            let plannerHTML = "";
 
-    weekPlanner[todayName].forEach(function (activity) {
-        const timeText = activity.time ? activity.time : "";
+            weekPlanner[todayName].forEach(function (activity) {
+                const timeText = activity.time ? activity.time : "";
 
-        if (activity.end) {
-            const startMinutes = timeToMinutes(activity.time);
-            const endMinutes = timeToMinutes(activity.end);
+                if (activity.end) {
+                    const startMinutes = timeToMinutes(activity.time);
+                    const endMinutes = timeToMinutes(activity.end);
 
-            if (currentMinutes >= startMinutes && currentMinutes < endMinutes) {
-                plannerHTML += `<div class="reminderRow">
+                    if (currentMinutes >= startMinutes && currentMinutes < endMinutes) {
+                        plannerHTML += `<div class="reminderRow">
                 <span class="reminderDot"></span>
                 <span class="reminderName">${activity.name}</span>
                 <span class="reminderDays">Jetzt</span>
             </div>`;
-            } else {
-                plannerHTML += `<div class="reminderRow">
+                    } else {
+                        plannerHTML += `<div class="reminderRow">
                 <span class="reminderDot"></span>
                 <span class="reminderName">${activity.name}</span>
                 <span class="reminderDays">${timeText}</span>
             </div>`;
-            }
-        } else {
-            plannerHTML += `<div class="reminderRow">
+                    }
+                } else {
+                    plannerHTML += `<div class="reminderRow">
             <span class="reminderDot"></span>
             <span class="reminderName">${activity.name}</span>
             <span class="reminderDays">${timeText}</span>
         </div>`;
-        }
-    });
+                }
+            });
 
-    document.getElementById("plannerList").innerHTML = plannerHTML;
+            document.getElementById("plannerList").innerHTML = plannerHTML;
 
-    document.getElementById("reminderList").innerHTML = reminderHTML;
-    document.getElementById("reminderCount").textContent = visibleCount;
-    document.getElementById("plannerDay").textContent = todayName;
+            document.getElementById("reminderList").innerHTML = reminderHTML;
+            document.getElementById("reminderCount").textContent = visibleCount;
+            document.getElementById("plannerDay").textContent = todayName;
 
-    const weekdayShort = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
+            const weekdayShort = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
 
-    const weatherIcons = {
-        0: "☀️", 1: "🌤️", 2: "⛅", 3: "☁️",
-        45: "🌫️", 48: "🌫️",
-        51: "🌦️", 53: "🌦️", 55: "🌧️",
-        61: "🌦️", 63: "🌧️", 65: "🌧️",
-        71: "🌨️", 73: "🌨️", 75: "❄️",
-        80: "🌦️", 81: "🌧️", 82: "⛈️",
-        95: "⛈️"
-    };
+            const weatherIcons = {
+                0: "☀️", 1: "🌤️", 2: "⛅", 3: "☁️",
+                45: "🌫️", 48: "🌫️",
+                51: "🌦️", 53: "🌦️", 55: "🌧️",
+                61: "🌦️", 63: "🌧️", 65: "🌧️",
+                71: "🌨️", 73: "🌨️", 75: "❄️",
+                80: "🌦️", 81: "🌧️", 82: "⛈️",
+                95: "⛈️"
+            };
 
-    function getWeatherIcon(code) {
-        return weatherIcons[code] || "☁️";
-    }
+            function getWeatherIcon(code) {
+                return weatherIcons[code] || "☁️";
+            }
 
-    async function loadWeather() {
-        const url = "https://api.open-meteo.com/v1/forecast?latitude=51.99&longitude=9.83&current=temperature_2m,precipitation_probability&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weathercode&timezone=auto";
-        const response = await fetch(url);
-        const data = await response.json();
+            async function loadWeather() {
+                const url = "https://api.open-meteo.com/v1/forecast?latitude=51.99&longitude=9.83&current=temperature_2m,precipitation_probability&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weathercode&timezone=auto";
+                const response = await fetch(url);
+                const data = await response.json();
 
-        const currentTemp = Math.round(data.current.temperature_2m);
-        const currentRain = data.current.precipitation_probability;
-        const currentIcon = getWeatherIcon(data.daily.weathercode[0]);
+                const currentTemp = Math.round(data.current.temperature_2m);
+                const currentRain = data.current.precipitation_probability;
+                const currentIcon = getWeatherIcon(data.daily.weathercode[0]);
 
-        let forecastHTML = "";
+                let forecastHTML = "";
 
-        for (let i = 1; i <= 4; i++) {
-            const dayIndex = new Date(data.daily.time[i]).getDay();
-            const dayLabel = weekdayShort[dayIndex];
-            const icon = getWeatherIcon(data.daily.weathercode[i]);
-            const rain = data.daily.precipitation_probability_max[i];
-            const maxTemp = Math.round(data.daily.temperature_2m_max[i]);
-            const minTemp = Math.round(data.daily.temperature_2m_min[i]);
+                for (let i = 1; i <= 4; i++) {
+                    const dayIndex = new Date(data.daily.time[i]).getDay();
+                    const dayLabel = weekdayShort[dayIndex];
+                    const icon = getWeatherIcon(data.daily.weathercode[i]);
+                    const rain = data.daily.precipitation_probability_max[i];
+                    const maxTemp = Math.round(data.daily.temperature_2m_max[i]);
+                    const minTemp = Math.round(data.daily.temperature_2m_min[i]);
 
-            forecastHTML += `<div class="weatherRow">
+                    forecastHTML += `<div class="weatherRow">
         <span class="weatherDay">${dayLabel}</span>
         <span class="weatherIcon">${icon}</span>
         <span class="weatherRain">${rain}%</span>
         <span class="weatherTemp">${maxTemp}°/${minTemp}°</span>
     </div>`;
-        }
+                }
 
-        document.getElementById("weatherWidget").innerHTML = `
+                document.getElementById("weatherWidget").innerHTML = `
         <div class="weatherHeader">
             <div>
                 <div class="weatherCity">Alfeld</div>
@@ -735,9 +775,16 @@
         </div>
         <div class="weatherForecast">${forecastHTML}</div>
     `;
+            }
+
+            loadWeather();
+        } catch (error) {
+            document.body.innerHTML = `<div style="color: white; padding: 20px; font-family: sans-serif; font-size: 20px;">Fehler: ${error.message}</div>`;
+        }
     }
 
-    loadWeather();
+    init();
+
 </script>
 
 </html>
