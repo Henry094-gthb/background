@@ -201,6 +201,10 @@
             border-radius: 10px;
         }
 
+        .scheduleRow.active .examDate {
+            color: var(--text-primary);
+        }
+
         .periodNumber {
             width: 28px;
             flex-shrink: 0;
@@ -210,6 +214,18 @@
 
         .periodSubject {
             flex: 1;
+            font-size: 0.8em;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .examDate {
+            color: var(--accent-orange);
+            font-size: 0.75em;
+            margin-left: 6px;
+            flex-shrink: 0;
+            white-space: nowrap;
         }
 
         #widgetThree {
@@ -412,17 +428,22 @@
         { name: "Geburtstag Mama", type: "yearly", month: 10, day: 15 },
         { name: "Geburtstag Papa", type: "yearly", month: 11, day: 26 },
         { name: "Geburtstag Milan", type: "yearly", month: 12, day: 17 },
-        { name: "Geburtstag Oma", type: "yearly", month: 03, day: 27 },
-        { name: "Geburtstag Frank", type: "yearly", month: 09, day: 13 },
+        { name: "Geburtstag Oma", type: "yearly", month: 3, day: 27 },
+        { name: "Geburtstag Frank", type: "yearly", month: 9, day: 13 },
         { name: "Geburtstag Jürgen", type: "yearly", month: 12, day: 24 },
         { name: "AGFE", type: "date", date: "2026-09-12" },
         { name: "Jugendfeedern", type: "date", date: "2026-09-13" },
         { name: "Gemeinschaftsfischen", type: "date", date: "2026-09-19" },
         { name: "Kameradschaftsangeln", type: "date", date: "2026-09-26" },
-        { name: "", type: "date", date: "2026-09-" },
         { name: "Abangeln", type: "date", date: "2026-12-29" },
         { name: "Taschenrechner Mathe", type: "date", date: "2026-09-10" }
     ];
+
+    const exams = {
+        Mathematik: "2026-09-06",
+        Chemie: "2026-09-20",
+        Spanisch: "2026-09-21",
+    };
 
     const weekPlanner = {
         Montag: [
@@ -488,32 +509,68 @@
         return Math.round((targetDate - today) / msPerDay);
     }
 
+    function formatExamDate(date) {
+        const day = String(date.getDate()).padStart(2, "0");
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const year = String(date.getFullYear()).slice(-2);
+        return `${day}.${month}.${year}`;
+    }
+
+    function getExamText(subject, now) {
+        if (subject === null) {
+            return "";
+        }
+
+        const examDateString = exams[subject];
+
+        if (!examDateString) {
+            return "";
+        }
+
+        const examDate = startOfDay(new Date(examDateString));
+        const today = startOfDay(now);
+
+        if (examDate < today) {
+            return "";
+        }
+
+        return formatExamDate(examDate);
+    }
+
     let scheduleHTML = "";
 
     periodTimes.forEach(function (period, index) {
         const subject = weekSchedule[todayName][index];
+        const previousSubject = index > 0 ? weekSchedule[todayName][index - 1] : null;
         const startMinutes = timeToMinutes(period.start);
         const endMinutes = timeToMinutes(period.end);
         const isActive = currentMinutes >= startMinutes && currentMinutes < endMinutes;
         const displaySubject = subject === null ? "---" : subject;
         const activeClass = (isActive && subject !== null) ? "active" : "";
+        const examText = (subject !== previousSubject) ? getExamText(subject, now) : "";
+        const examHTML = examText ? `<span class="examDate">${examText}</span>` : "";
 
         if (currentMinutes >= 910) {
             const subject = weekSchedule[tomorrowName][index];
+            const previousSubject = index > 0 ? weekSchedule[tomorrowName][index - 1] : null;
             const displaySubject = subject === null ? "---" : subject;
+            const tomorrowExamText = (subject !== previousSubject) ? getExamText(subject, now) : "";
+            const tomorrowExamHTML = tomorrowExamText ? `<span class="examDate">${tomorrowExamText}</span>` : "";
 
             scheduleHTML += `<div class="scheduleRow ${activeClass}">
-            <span class="periodNumber">${period.period}</span>
-            <span class="periodSubject">${displaySubject}</span>
-        </div>`
+        <span class="periodNumber">${period.period}</span>
+        <span class="periodSubject">${displaySubject}</span>
+        ${tomorrowExamHTML}
+    </div>`;
 
             return;
         }
 
         scheduleHTML += `<div class="scheduleRow ${activeClass}">
-            <span class="periodNumber">${period.period}</span>
-            <span class="periodSubject">${displaySubject}</span>
-        </div>`;
+    <span class="periodNumber">${period.period}</span>
+    <span class="periodSubject">${displaySubject}</span>
+    ${examHTML}
+</div>`;
     });
 
     document.getElementById("scheduleList").innerHTML = scheduleHTML;
@@ -547,7 +604,7 @@
         }
 
         else if (daysLeft === 0) {
-visibleCount++;
+            visibleCount++;
             if (reminder.start) {
                 const startMinutes = timeToMinutes(reminder.start);
                 const endMinutes = reminder.end ? timeToMinutes(reminder.end) : null;
@@ -581,10 +638,9 @@ visibleCount++;
     });
 
     document.getElementById("reminderList").style.fontSize =
-            visibleCount < 0 ? "0.9em" :
-                visibleCount <= 4 ? "0.8em" :
-                    visibleCount <= 5 ? "0.7em" :
-                                            "0.6em";
+        visibleCount > 0 ? "0.8em" :
+            visibleCount <= 5 ? "0.7em" :
+                "0.6em";
 
     let plannerHTML = "";
 
@@ -592,8 +648,8 @@ visibleCount++;
         const timeText = activity.time ? activity.time : "";
 
         if (activity.end) {
-            startMinutes = timeToMinutes(activity.time);
-            endMinutes = timeToMinutes(activity.end);
+            const startMinutes = timeToMinutes(activity.time);
+            const endMinutes = timeToMinutes(activity.end);
 
             if (currentMinutes >= startMinutes && currentMinutes < endMinutes) {
                 plannerHTML += `<div class="reminderRow">
